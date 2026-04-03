@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real Malbo 20 | EA FC Pro Clubs</title>
+<meta name="description" content="Real Malbo 20 - EA FC Pro Clubs Dashboard con estadísticas en tiempo real">
+<link rel="icon" href="https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l22.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--cy:#00f0ff;--mg:#ff00aa;--gd:#ffd700;--gn:#00ff88;--bg:#030810;--card:rgba(8,18,38,0.88);--brd:rgba(0,240,255,0.15);--t1:#e8f4ff;--t2:#7da8cc;--win:#00ff88;--draw:#ffd700;--loss:#ff3366}
+html{scroll-behavior:smooth}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--t1);overflow-x:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--cy);border-radius:3px}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,240,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,0.03) 1px,transparent 1px);background-size:60px 60px;animation:gm 20s linear infinite}
+@keyframes gm{to{background-position:60px 60px}}
+.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;animation:of 15s ease-in-out infinite}
+.orb:nth-child(1){width:500px;height:500px;background:var(--cy);top:-10%;left:-5%}
+.orb:nth-child(2){width:400px;height:400px;background:var(--mg);bottom:-10%;right:-5%;animation-delay:-5s}
+.orb:nth-child(3){width:300px;height:300px;background:var(--gd);top:40%;left:50%;animation-delay:-10s}
+@keyframes of{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-40px) scale(1.1)}66%{transform:translate(-20px,30px) scale(.9)}}
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:12px 30px;display:flex;align-items:center;justify-content:space-between;background:rgba(3,8,16,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--brd)}
+.nav-brand{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;color:var(--cy);letter-spacing:2px;display:flex;align-items:center;gap:10px}
+.nav-brand img{width:30px;height:30px;border-radius:50%;border:1px solid var(--cy)}
+.live-dot{width:8px;height:8px;background:var(--gn);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--gn)}50%{opacity:.4}}
+.nav-links{display:flex;gap:22px;list-style:none}
+.nav-links a{color:var(--t2);text-decoration:none;font-family:'Exo 2',sans-serif;font-weight:500;font-size:.75rem;letter-spacing:1.5px;text-transform:uppercase;transition:.3s}
+.nav-links a:hover{color:var(--cy)}
+.nav-status{font-size:.6rem;font-family:'Exo 2',sans-serif;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+
+.loading-screen{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s}
+.loading-screen.hidden{opacity:0;pointer-events:none}
+.loader{width:60px;height:60px;border:3px solid var(--brd);border-top-color:var(--cy);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{margin-top:20px;font-family:'Orbitron',monospace;font-size:.8rem;color:var(--cy);letter-spacing:3px}
+.loading-sub{margin-top:8px;font-size:.7rem;color:var(--t2);letter-spacing:1px}
+
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 30px 80px;text-align:center}
+.shield-wrap{position:relative;margin-bottom:25px}
+.shield{width:150px;height:150px;position:relative;z-index:2}
+.shield img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 25px rgba(0,240,255,.4))}
+.ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:2px solid var(--brd);border-radius:50%;animation:rr 10s linear infinite}
+.ring::before{content:'';position:absolute;top:-4px;left:50%;width:8px;height:8px;background:var(--cy);border-radius:50%;box-shadow:0 0 15px var(--cy)}
+.ring1{width:200px;height:200px}.ring2{width:240px;height:240px;border-width:1px;border-color:rgba(0,240,255,.08);animation-direction:reverse;animation-duration:20s}
+@keyframes rr{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.club-name{font-family:'Orbitron',monospace;font-size:clamp(2.2rem,5.5vw,4.2rem);font-weight:900;letter-spacing:5px;text-transform:uppercase;background:linear-gradient(135deg,#fff,var(--cy),var(--mg));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;margin-bottom:6px}
+.sub{font-family:'Exo 2',sans-serif;font-size:.9rem;color:var(--t2);letter-spacing:6px;text-transform:uppercase;margin-bottom:6px}
+.club-id{font-size:.65rem;color:rgba(125,168,204,.4);letter-spacing:3px;margin-bottom:30px}
+
+.hero-stats{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.hs{text-align:center;padding:16px 24px;background:var(--card);border:1px solid var(--brd);border-radius:12px;backdrop-filter:blur(10px);min-width:110px;transition:.3s;position:relative;overflow:hidden}
+.hs::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cy),transparent)}
+.hs:hover{transform:translateY(-4px);border-color:var(--cy);box-shadow:0 8px 30px rgba(0,240,255,.1)}
+.hs .v{font-family:'Orbitron',monospace;font-size:1.7rem;font-weight:800;color:var(--cy);display:block}
+.hs .v.gold{color:var(--gd)}.hs .v.green{color:var(--gn)}
+.hs .l{font-size:.65rem;color:var(--t2);text-transform:uppercase;letter-spacing:2px;margin-top:3px}
+
+.rec-wrap{margin-top:25px;width:100%;max-width:480px}
+.rec-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px}
+.rec-bar .w{background:var(--win)}.rec-bar .d{background:var(--draw)}.rec-bar .l{background:var(--loss)}
+.rec-lbl{display:flex;justify-content:space-between;font-size:.65rem;font-family:'Exo 2',sans-serif}
+.rec-lbl span{display:flex;align-items:center;gap:4px}
+.rec-lbl .dt{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+.content{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 25px 80px}
+.section{margin-bottom:55px}
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:25px;padding-bottom:12px;border-bottom:1px solid var(--brd)}
+.si{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:linear-gradient(135deg,rgba(0,240,255,.15),rgba(255,0,170,.1));border:1px solid var(--brd)}
+.st{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+.sb{margin-left:auto;padding:3px 12px;border-radius:20px;font-size:.6rem;font-family:'Exo 2',sans-serif;letter-spacing:2px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:var(--gn)}
+.card{background:var(--card);border:1px solid var(--brd);border-radius:14px;backdrop-filter:blur(10px);overflow:hidden;transition:.3s}
+.card:hover{border-color:rgba(0,240,255,.3);box-shadow:0 6px 30px rgba(0,240,255,.08)}
+.glow-line{height:1px;background:linear-gradient(90deg,transparent,var(--cy),var(--mg),transparent);margin:35px 0;opacity:.4}
+
+.div-card{padding:25px;display:flex;align-items:center;gap:25px;flex-wrap:wrap}
+.div-vis{width:100px;height:100px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative}
+.div-vis img{width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 15px rgba(255,215,0,.3))}
+.div-vis::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(255,215,0,.2);animation:rr 15s linear infinite}
+.div-info{flex:1;min-width:200px}
+.div-info h3{font-family:'Orbitron',monospace;font-size:1rem;margin-bottom:12px;color:var(--gd)}
+.dm{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.dmi{padding:8px 12px;background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.1);border-radius:8px}
+.dmi .dv{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700}.dmi .dl{font-size:.6rem;color:var(--t2);text-transform:uppercase;letter-spacing:1px}
+
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.sc{padding:20px;text-align:center;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cy),var(--mg))}
+.sc .sv{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,var(--cy),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sc .sl{font-size:.6rem;color:var(--t2);text-transform:uppercase;letter-spacing:2px;margin-top:5px}
+.sc .sbar{margin-top:10px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
+.sc .sf{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cy),var(--mg));transition:width 1.5s}
+
+.ml{display:flex;flex-direction:column;gap:10px}
+.mc{padding:14px 20px;display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:15px}
+.mt{display:flex;align-items:center;gap:10px}
+.mt.away{justify-content:flex-end;text-align:right}
+.tl{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;background:rgba(0,240,255,.1);border:1px solid var(--brd);flex-shrink:0}
+.tl.us{background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(255,0,170,.1));border-color:var(--cy)}
+.tn{font-family:'Exo 2',sans-serif;font-weight:600;font-size:.85rem}
+.ms{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:800;padding:6px 14px;border-radius:6px;background:rgba(0,0,0,.4);border:1px solid var(--brd);min-width:80px;text-align:center;letter-spacing:3px}
+.mm{text-align:right;min-width:70px}
+.mr{display:inline-block;padding:2px 8px;border-radius:3px;font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.mr.W{background:rgba(0,255,136,.15);color:var(--win);border:1px solid rgba(0,255,136,.3)}
+.mr.D{background:rgba(255,215,0,.15);color:var(--draw);border:1px solid rgba(255,215,0,.3)}
+.mr.L{background:rgba(255,51,102,.15);color:var(--loss);border:1px solid rgba(255,51,102,.3)}
+.md{font-size:.6rem;color:var(--t2);margin-top:3px}
+
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.pc{position:relative;overflow:hidden}
+.ph{padding:18px 18px 12px;position:relative;background:linear-gradient(180deg,rgba(0,240,255,.06),transparent)}
+.pp{position:absolute;top:10px;right:10px;padding:2px 8px;border-radius:4px;font-size:.55rem;font-weight:700;letter-spacing:2px;font-family:'Orbitron',monospace}
+.pp.FW{background:rgba(255,0,170,.2);color:var(--mg);border:1px solid rgba(255,0,170,.3)}
+.pp.MID{background:rgba(0,255,136,.2);color:var(--gn);border:1px solid rgba(0,255,136,.3)}
+.pp.DEF{background:rgba(0,136,255,.2);color:#00aaff;border:1px solid rgba(0,136,255,.3)}
+.pp.GK{background:rgba(255,215,0,.2);color:var(--gd);border:1px solid rgba(255,215,0,.3)}
+.pa{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(255,0,170,.15));border:2px solid var(--brd);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:800;margin-bottom:6px}
+.pn{font-family:'Exo 2',sans-serif;font-weight:700;font-size:.95rem}
+.pr{font-size:.6rem;color:var(--t2);margin-top:2px}
+.prb{position:absolute;top:12px;left:12px;font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;background:linear-gradient(135deg,var(--cy),var(--mg));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.psr{padding:12px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;border-top:1px solid var(--brd)}
+.ps{text-align:center}.psv{font-family:'Orbitron',monospace;font-size:.85rem;font-weight:700}.psl{font-size:.45rem;color:var(--t2);text-transform:uppercase;letter-spacing:1px}
+.pmm{padding:6px 18px;border-top:1px solid rgba(255,215,0,.1);display:flex;align-items:center;justify-content:center;gap:5px;font-size:.65rem;color:var(--gd);font-family:'Exo 2',sans-serif}
+
+.ts{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
+.tc{padding:22px}
+.tct{font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:3px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.tct .em{font-size:1.2rem}
+.tlist{display:flex;flex-direction:column;gap:8px}
+.ti{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;background:rgba(0,240,255,.03);border:1px solid transparent;transition:.3s}
+.ti:hover{border-color:var(--brd);background:rgba(0,240,255,.06)}
+.tr{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:800;width:28px;text-align:center;color:var(--t2)}
+.tr.r1{color:var(--gd)}.tr.r2{color:#c0c0c0}.tr.r3{color:#cd7f32}
+.tav{width:35px;height:35px;border-radius:50%;background:linear-gradient(135deg,rgba(0,240,255,.15),rgba(255,0,170,.1));border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700}
+.tinfo{flex:1}.tname{font-weight:600;font-size:.85rem}.tpos{font-size:.55rem;color:var(--t2)}
+.tv{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700}
+.tv.g{color:var(--mg)}.tv.a{color:var(--cy)}.tv.r{color:var(--gd)}
+
+.refresh-btn{position:fixed;bottom:25px;right:25px;z-index:99;width:50px;height:50px;border-radius:50%;border:1px solid var(--cy);background:var(--card);backdrop-filter:blur(10px);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:.3s;box-shadow:0 4px 20px rgba(0,240,255,.2);color:var(--t1)}
+.refresh-btn:hover{transform:scale(1.1);box-shadow:0 6px 30px rgba(0,240,255,.4)}
+.refresh-btn.spinning{animation:spin 1s linear infinite}
+
+.footer{position:relative;z-index:1;text-align:center;padding:35px;border-top:1px solid var(--brd);margin-top:35px}
+.footer p{color:var(--t2);font-size:.65rem;letter-spacing:2px}
+.footer .brand{font-family:'Orbitron',monospace;color:var(--cy)}
+.footer a{color:var(--cy);text-decoration:none}
+
+.error-box{padding:30px;text-align:center;border:1px solid rgba(255,51,102,.3);border-radius:14px;background:rgba(255,51,102,.05);margin:20px auto;max-width:700px}
+.error-box h3{font-family:'Orbitron',monospace;color:var(--loss);margin-bottom:10px;font-size:.9rem}
+.error-box p{color:var(--t2);font-size:.8rem;line-height:1.6}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(25px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .5s ease forwards;opacity:0}
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}.d5{animation-delay:.5s}
+
+@media(max-width:768px){
+.nav{padding:10px 15px}.nav-links{display:none}.nav-status{display:none}
+.hero{padding:100px 15px 50px}.club-name{letter-spacing:3px}
+.hero-stats{gap:10px}.hs{min-width:90px;padding:12px 14px}.hs .v{font-size:1.3rem}
+.content{padding:0 12px 60px}.ts{grid-template-columns:1fr}
+.pg{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.div-card{flex-direction:column;text-align:center}
+.mc{grid-template-columns:1fr;gap:8px;text-align:center}.mt,.mt.away{justify-content:center;text-align:center}.mm{text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+<div class="loader"></div>
+<div class="loading-text">CONECTANDO CON EA...</div>
+<div class="loading-sub">Obteniendo datos en tiempo real de Real Malbo 20</div>
+</div>
+
+<canvas id="particles"></canvas>
+<div class="bg-grid"></div>
+<div class="bg-orbs"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+
+<nav class="nav">
+<div class="nav-brand">
+<img src="https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l22.png" alt="">
+<span class="live-dot"></span>REAL MALBO 20
+</div>
+<ul class="nav-links">
+<li><a href="#inicio">Inicio</a></li>
+<li><a href="#division">División</a></li>
+<li><a href="#stats">Stats</a></li>
+<li><a href="#partidos">Partidos</a></li>
+<li><a href="#jugadores">Plantilla</a></li>
+<li><a href="#top">Rankings</a></li>
+</ul>
+<div class="nav-status" id="apiStatus" style="color:var(--gd)">● CONECTANDO...</div>
+</nav>
+
+<button class="refresh-btn" id="refreshBtn" title="Actualizar datos">🔄</button>
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — Cambia estos valores para tu club
+// ═══════════════════════════════════════════
+const CLUB_ID  = '483418';
+const PLATFORM = 'common-gen5';
+const CREST    = 'https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l22.png';
+
+// Proxy path — apunta a nuestra propia API serverless en Vercel
+const PROXY = '/api/ea-proxy';
+
+// ═══════════════════════════════════════════
+// API CALLS via our Vercel proxy
+// ═══════════════════════════════════════════
+async function eaFetch(endpoint, params = {}) {
+  const qs = new URLSearchParams({ endpoint, ...params }).toString();
+  const res = await fetch(`${PROXY}?${qs}`, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+async function fetchAllData() {
+  const calls = {
+    club:    eaFetch('clubs/info',          { clubIds: CLUB_ID, platform: PLATFORM }),
+    season:  eaFetch('clubs/seasonalStats', { clubIds: CLUB_ID, platform: PLATFORM }),
+    members: eaFetch('members/stats',       { clubId: CLUB_ID,  platform: PLATFORM }),
+    career:  eaFetch('members/career/stats',{ clubId: CLUB_ID,  platform: PLATFORM }),
+    matches: eaFetch('clubs/matches',       { clubIds: CLUB_ID, platform: PLATFORM, matchType: 'leagueMatch' })
+  };
+
+  const results = {};
+  const errors  = [];
+
+  for (const [k, promise] of Object.entries(calls)) {
+    try { results[k] = await promise; }
+    catch { errors.push(k); results[k] = null; }
+  }
+  return { results, errors };
+}
+
+// ═══════════════════════════════════════════
+// DATA HELPERS
+// ═══════════════════════════════════════════
+const dig = (d) => d ? (d[CLUB_ID] || Object.values(d)[0] || d) : null;
+const arr = (d) => {
+  if (!d) return [];
+  if (Array.isArray(d)) return d;
+  const v = d[CLUB_ID] || Object.values(d)[0];
+  return v?.members || (Array.isArray(v) ? v : []);
+};
+const ini = n => n ? n.slice(0,2).toUpperCase() : '??';
+const posMap = {0:'GK',1:'RB',2:'LB',3:'CB',4:'CB',5:'CDM',6:'CM',7:'CAM',8:'LM',9:'RM',10:'ST',11:'LW',12:'RW',13:'CF',14:'RWB',15:'LWB'};
+const posLabel = p => posMap[p] || p || 'MID';
+const posCat = p => {
+  if (['ST','CF','RW','LW','LF','RF','FW'].includes(p)) return 'FW';
+  if (['CM','CAM','CDM','LM','RM','MID'].includes(p)) return 'MID';
+  if (['CB','RB','LB','RWB','LWB','DEF'].includes(p)) return 'DEF';
+  return p === 'GK' ? 'GK' : 'MID';
+};
+const posName = c => ({FW:'Delantero',MID:'Mediocampista',DEF:'Defensa',GK:'Portero'}[c]||'Jugador');
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function render({ results, errors }) {
+  const club = dig(results.club);
+  const season = dig(results.season);
+  const s = club || season || {};
+
+  const members = arr(results.members).length ? arr(results.members) : arr(results.career);
+  const rawMatches = results.matches;
+
+  const wins = +(s.wins||s.winsGamemodesCount||0), losses = +(s.losses||s.lossesGamemodesCount||0), ties = +(s.ties||s.tiesGamemodesCount||0);
+  const total = wins+losses+ties || +(s.gamesPlayed||0);
+  const wr = total ? (wins/total*100).toFixed(1) : '0';
+  const gf = +(s.goals||s.goalsGamemodesCount||0), ga = +(s.goalsAgainst||s.goalsAgainstGamemodesCount||0), gd = gf-ga;
+  const name = s.name||'Real Malbo 20';
+  const sr = s.skillRating||'—', div = s.currentDivision||'—', bestDiv = s.bestDivision||div;
+  const promo = +(s.promotions||0), releg = +(s.relegations||0);
+
+  const players = members.map(m => ({
+    name: m.name||m.blazeId||m.persona||'?',
+    pos: posLabel(m.favoritePosition??m.proPos),
+    goals: +(m.goals||0), assists: +(m.assists||0),
+    apps: +(m.gamesPlayed||m.memberGamesPlayed||0),
+    rating: parseFloat(m.ratingAve||m.rating||0).toFixed(1),
+    motm: +(m.manOfTheMatch||0)
+  })).sort((a,b) => b.rating-a.rating);
+
+  const topG = [...players].sort((a,b)=>b.goals-a.goals).slice(0,5);
+  const topA = [...players].sort((a,b)=>b.assists-a.assists).slice(0,5);
+  const topR = [...players].sort((a,b)=>b.rating-a.rating).slice(0,5);
+  const topM = [...players].sort((a,b)=>b.motm-a.motm).slice(0,5);
+
+  // Parse matches
+  let matchList = [];
+  if (rawMatches) {
+    const mArr = Array.isArray(rawMatches) ? rawMatches : (rawMatches[CLUB_ID] || Object.values(rawMatches)[0] || []);
+    if (Array.isArray(mArr)) {
+      matchList = mArr.slice(0,10).map(m => {
+        const clubs = m.clubs||{};
+        const our = clubs[CLUB_ID]||{};
+        const oppId = Object.keys(clubs).find(id=>id!==CLUB_ID)||'';
+        const opp = clubs[oppId]||{};
+        const og = +(our.goals||0), eg = +(opp.goals||0);
+        const r = og>eg?'W':og<eg?'L':'D';
+        return { ourName:our.details?.name||name, oppName:opp.details?.name||`Club ${oppId}`, og, eg, r, rt:r==='W'?'Victoria':r==='L'?'Derrota':'Empate',
+          date: m.timestamp?new Date(+m.timestamp*1000).toLocaleDateString('es',{day:'2-digit',month:'short',year:'numeric'}):'' };
+      });
+    }
+  }
+
+  const has = club||season||players.length;
+  const wP=total?(wins/total*100):0, dP=total?(ties/total*100):0, lP=total?(losses/total*100):0;
+  const gpg=total?(gf/total).toFixed(2):'0', gcpg=total?(ga/total).toFixed(2):'0';
+  const tpg=players.reduce((s,p)=>s+p.goals,0), tpa=players.reduce((s,p)=>s+p.assists,0);
+
+  const rankC=i=>i===0?'r1':i===1?'r2':i===2?'r3':'';
+  const renderTop=(title,emoji,list,fn,cls)=>`<div class="card tc anim"><div class="tct"><span class="em">${emoji}</span>${title}</div><div class="tlist">${list.map((p,i)=>`<div class="ti"><span class="tr ${rankC(i)}">${i+1}</span><div class="tav">${ini(p.name)}</div><div class="tinfo"><div class="tname">${p.name}</div><div class="tpos">${p.pos} · ${p.apps} apps</div></div><span class="tv ${cls}">${fn(p)}</span></div>`).join('')}</div></div>`;
+
+  let h = `<section class="hero" id="inicio">
+    <div class="shield-wrap anim"><div class="ring ring1"></div><div class="ring ring2"></div><div class="shield"><img src="${CREST}" alt="${name}"></div></div>
+    <h1 class="club-name anim d1">${name}</h1>
+    <p class="sub anim d2">EA FC Pro Clubs 2026</p>
+    <p class="club-id anim d2">CLUB ID: ${CLUB_ID} · ${PLATFORM.toUpperCase()}</p>
+    ${has?`<div class="hero-stats anim d3">
+      <div class="hs"><span class="v gold">${sr}</span><span class="l">Skill Rating</span></div>
+      <div class="hs"><span class="v">${total}</span><span class="l">Partidos</span></div>
+      <div class="hs"><span class="v green">${wins}</span><span class="l">Victorias</span></div>
+      <div class="hs"><span class="v">${wr}%</span><span class="l">Win Rate</span></div>
+      <div class="hs"><span class="v">${gf}</span><span class="l">Goles</span></div>
+      <div class="hs"><span class="v">${gd>=0?'+':''}${gd}</span><span class="l">Dif. Goles</span></div>
+    </div>
+    <div class="rec-wrap anim d4">
+      <div class="rec-bar"><div class="w" style="width:${wP}%"></div><div class="d" style="width:${dP}%"></div><div class="l" style="width:${lP}%"></div></div>
+      <div class="rec-lbl"><span><span class="dt" style="background:var(--win)"></span>${wins}W (${wP.toFixed(1)}%)</span><span><span class="dt" style="background:var(--draw)"></span>${ties}D (${dP.toFixed(1)}%)</span><span><span class="dt" style="background:var(--loss)"></span>${losses}L (${lP.toFixed(1)}%)</span></div>
+    </div>`:''}
+  </section><div class="content"><div class="glow-line"></div>`;
+
+  if (!has) {
+    h += `<div class="error-box"><h3>⚠ NO SE PUDIERON OBTENER DATOS</h3><p>La API de EA puede estar caída o el proxy no está desplegado. Asegúrate de hacer deploy en Vercel siguiendo las instrucciones del README.</p></div>`;
+  }
+
+  if (has) {
+    h += `<section class="section" id="division"><div class="sh"><div class="si">🏆</div><h2 class="st">División</h2><span class="sb">⚡ LIVE</span></div>
+    <div class="card div-card anim"><div class="div-vis"><img src="https://media.contentapi.ea.com/content/dam/eacom/fc/pro-clubs/divisioncrest${bestDiv||3}.png" alt="Div"></div>
+    <div class="div-info"><h3>Mejor División: ${bestDiv||'—'} · Actual: ${div||'—'}</h3><div class="dm">
+    <div class="dmi"><span class="dv">${sr}</span><span class="dl">Skill Rating</span></div>
+    <div class="dmi"><span class="dv">${wins}-${ties}-${losses}</span><span class="dl">Record</span></div>
+    <div class="dmi"><span class="dv">${total}</span><span class="dl">Partidos</span></div>
+    <div class="dmi"><span class="dv">${promo||'—'}</span><span class="dl">Ascensos</span></div>
+    <div class="dmi"><span class="dv">${releg||'—'}</span><span class="dl">Descensos</span></div>
+    <div class="dmi"><span class="dv">${gd>=0?'+':''}${gd}</span><span class="dl">Dif. Goles</span></div>
+    </div></div></div></section>`;
+
+    h += `<section class="section" id="stats"><div class="sh"><div class="si">📊</div><h2 class="st">Estadísticas</h2><span class="sb">⚡ LIVE</span></div>
+    <div class="sg">
+    <div class="card sc anim"><span class="sv">${gf}</span><span class="sl">Goles a Favor</span><div class="sbar"><div class="sf" style="width:${Math.min(gf/6,100)}%"></div></div></div>
+    <div class="card sc anim d1"><span class="sv">${ga}</span><span class="sl">Goles en Contra</span><div class="sbar"><div class="sf" style="width:${Math.min(ga/6,100)}%"></div></div></div>
+    <div class="card sc anim d2"><span class="sv">${gd>=0?'+':''}${gd}</span><span class="sl">Diferencia</span><div class="sbar"><div class="sf" style="width:${Math.min(Math.abs(gd)/3,100)}%"></div></div></div>
+    <div class="card sc anim d3"><span class="sv">${gpg}</span><span class="sl">Goles/Partido</span><div class="sbar"><div class="sf" style="width:${gpg*25}%"></div></div></div>
+    <div class="card sc anim d4"><span class="sv">${gcpg}</span><span class="sl">GC/Partido</span><div class="sbar"><div class="sf" style="width:${gcpg*25}%"></div></div></div>
+    <div class="card sc anim d5"><span class="sv">${tpg}</span><span class="sl">Goles Plantilla</span><div class="sbar"><div class="sf" style="width:80%"></div></div></div>
+    <div class="card sc anim"><span class="sv">${tpa}</span><span class="sl">Asist. Plantilla</span><div class="sbar"><div class="sf" style="width:70%"></div></div></div>
+    <div class="card sc anim d1"><span class="sv">${players.length}</span><span class="sl">Jugadores</span><div class="sbar"><div class="sf" style="width:${players.length*10}%"></div></div></div>
+    </div></section>`;
+  }
+
+  if (matchList.length) {
+    h += `<section class="section" id="partidos"><div class="sh"><div class="si">⚽</div><h2 class="st">Últimos Partidos</h2><span class="sb">⚡ LIVE</span></div><div class="ml">`;
+    matchList.forEach((m,i) => {
+      h += `<div class="card mc anim${i<6?' d'+i:''}"><div class="mt"><div class="tl us">${ini(m.ourName)}</div><span class="tn">${m.ourName}</span></div><div class="ms"><span style="color:var(--${m.r==='W'?'win':m.r==='L'?'loss':'draw'})">${m.og}</span> - <span style="color:var(--${m.r==='L'?'win':m.r==='W'?'loss':'draw'})">${m.eg}</span></div><div class="mt away"><span class="tn">${m.oppName}</span><div class="tl">${ini(m.oppName)}</div></div><div class="mm"><span class="mr ${m.r}">${m.rt}</span><div class="md">${m.date}</div></div></div>`;
+    });
+    h += `</div></section>`;
+  }
+
+  if (players.length) {
+    h += `<section class="section" id="jugadores"><div class="sh"><div class="si">👥</div><h2 class="st">Plantilla</h2><span class="sb">${players.length} JUGADORES</span></div><div class="pg">`;
+    players.forEach((p,i) => {
+      const c = posCat(p.pos);
+      h += `<div class="card pc anim${i<8?' d'+(i%6):''}"><div class="ph"><span class="prb">${p.rating}</span><span class="pp ${c}">${p.pos}</span><div class="pa">${ini(p.name)}</div><div class="pn">${p.name}</div><div class="pr">${posName(c)}</div></div><div class="psr"><div class="ps"><span class="psv">${p.apps}</span><span class="psl">Apps</span></div><div class="ps"><span class="psv" style="color:var(--mg)">${p.goals}</span><span class="psl">Goles</span></div><div class="ps"><span class="psv" style="color:var(--cy)">${p.assists}</span><span class="psl">Asist</span></div><div class="ps"><span class="psv">${p.rating}</span><span class="psl">Rating</span></div></div><div class="pmm">⭐ ${p.motm} MOTM</div></div>`;
+    });
+    h += `</div></section>`;
+
+    h += `<section class="section" id="top"><div class="sh"><div class="si">🥇</div><h2 class="st">Rankings</h2><span class="sb">TOP PLAYERS</span></div><div class="ts">
+    ${renderTop('TOP GOLEADORES','⚽',topG,p=>p.goals,'g')}
+    ${renderTop('TOP ASISTIDORES','🎯',topA,p=>p.assists,'a')}
+    ${renderTop('TOP RATED','⭐',topR,p=>p.rating,'r')}
+    </div><div style="margin-top:16px">${renderTop('TOP MAN OF THE MATCH','🏅',topM,p=>p.motm,'r')}</div></section>`;
+  }
+
+  h += `<footer class="footer"><p><span class="brand">${name.toUpperCase()}</span> — EA FC Pro Clubs 2026</p>
+  <p style="margin-top:6px;opacity:.5">Club ID: ${CLUB_ID} · API de EA via Vercel Proxy · Actualizado: ${new Date().toLocaleString('es')}</p>
+  <p style="margin-top:4px;opacity:.3;font-size:.55rem">Proyecto no oficial. No afiliado con EA Sports.</p></footer></div>`;
+
+  document.getElementById('app').innerHTML = h;
+  const obs = new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.style.animationPlayState='running'})},{threshold:.1});
+  document.querySelectorAll('.anim').forEach(el=>{el.style.animationPlayState='paused';obs.observe(el)});
+}
+
+// ═══════════════════════════════════════════
+// LOAD & REFRESH
+// ═══════════════════════════════════════════
+async function loadData() {
+  const btn = document.getElementById('refreshBtn');
+  const status = document.getElementById('apiStatus');
+  btn.classList.add('spinning');
+  status.textContent = '● CARGANDO...'; status.style.color = 'var(--gd)';
+
+  try {
+    const data = await fetchAllData();
+    render(data);
+    const ok = 5 - data.errors.length;
+    if (ok === 5) { status.textContent = '● LIVE DATA'; status.style.color = 'var(--gn)'; }
+    else if (ok > 0) { status.textContent = `● PARCIAL (${ok}/5)`; status.style.color = 'var(--gd)'; }
+    else { status.textContent = '● SIN DATOS'; status.style.color = 'var(--loss)'; }
+  } catch(e) {
+    status.textContent = '● ERROR'; status.style.color = 'var(--loss)';
+    render({ results:{}, errors:['all'] });
+  }
+
+  btn.classList.remove('spinning');
+  document.getElementById('loadingScreen').classList.add('hidden');
+}
+
+// Auto-refresh every 5 min
+setInterval(loadData, 5 * 60 * 1000);
+
+// ═══════════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════════
+const cvs=document.getElementById('particles'),ctx=cvs.getContext('2d');
+let W,H;function rz(){W=cvs.width=innerWidth;H=cvs.height=innerHeight}rz();addEventListener('resize',rz);
+class P{constructor(){this.reset()}reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.s=Math.random()*1.5+.5;this.a=Math.random()*.25+.1;this.c=Math.random()>.5?'0,240,255':'255,0,170'}update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset()}draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.s,0,Math.PI*2);ctx.fillStyle=`rgba(${this.c},${this.a})`;ctx.fill()}}
+const pts=Array.from({length:50},()=>new P());
+!function a(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw()});requestAnimationFrame(a)}();
+
+// Nav smooth scroll
+document.querySelectorAll('.nav-links a').forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'})})});
+document.getElementById('refreshBtn').addEventListener('click',loadData);
+
+// GO
+loadData();
+</script>
+</body>
+</html>
