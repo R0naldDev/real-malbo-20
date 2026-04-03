@@ -406,24 +406,27 @@ function render({ results, errors }) {
 // ═══════════════════════════════════════════
 async function loadData() {
   const btn = document.getElementById('refreshBtn');
-  const status = document.getElementById('apiStatus');
   btn.classList.add('spinning');
-  status.textContent = '● CARGANDO...'; status.style.color = 'var(--gd)';
-
+  
   try {
-    const data = await fetchAllData();
-    render(data);
-    const ok = 5 - data.errors.length;
-    if (ok === 5) { status.textContent = '● LIVE DATA'; status.style.color = 'var(--gn)'; }
-    else if (ok > 0) { status.textContent = `● PARCIAL (${ok}/5)`; status.style.color = 'var(--gd)'; }
-    else { status.textContent = '● SIN DATOS'; status.style.color = 'var(--loss)'; }
-  } catch(e) {
-    status.textContent = '● ERROR'; status.style.color = 'var(--loss)';
-    render({ results:{}, errors:['all'] });
-  }
+    // Llamamos a nuestro proxy (que ahora apunta a proclubs.io)
+    const response = await fetch('/api/ea-proxy');
+    const data = await response.json();
 
-  btn.classList.remove('spinning');
-  document.getElementById('loadingScreen').classList.add('hidden');
+    // Estructura de datos de ProClubs.io
+    // El objeto suele venir como { club: {...}, members: [...], matches: [...] }
+    console.log("Datos recibidos:", data);
+
+    // Aquí mapeas los datos a tu diseño
+    document.getElementById('clubName').innerText = data.club.name;
+    document.getElementById('wins').innerText = data.club.wins;
+    // ... etc
+    
+  } catch (error) {
+    console.error("Error cargando Real Malbo 20:", error);
+  } finally {
+    btn.classList.remove('spinning');
+  }
 }
 
 // Auto-refresh every 5 min
