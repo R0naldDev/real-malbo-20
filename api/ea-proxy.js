@@ -10,18 +10,23 @@ export default function handler(req, res) {
   const { endpoint, ...params } = req.query;
   if (!endpoint) return res.status(400).json({ error: 'Falta endpoint' });
 
-  // Importante: No usamos URLSearchParams para el endpoint para evitar el %2F
   const queryParams = new URLSearchParams(params).toString();
-  const eaUrl = `https://proclubs.ea.com/api/fc/${endpoint}?${queryParams}`;
+  // Limpiamos el endpoint de posibles barras duplicadas
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+  const eaUrl = `https://proclubs.ea.com/api/fc/${cleanEndpoint}?${queryParams}`;
 
   const options = {
     method: 'GET',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-      'Accept': 'application/json',
-      'Accept-Language': 'es-ES,es;q=0.9',
-      'Referer': 'https://www.ea.com/',
-      'Origin': 'https://www.ea.com'
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+      'Referer': 'https://www.ea.com/games/ea-sports-fc/clubs/overview',
+      'Origin': 'https://www.ea.com',
+      'Connection': 'keep-alive',
+      // Esta cookie es clave para evitar el 403 en algunos servidores de EA
+      'Cookie': 'nexus.v=1; eadp-session-id=123456789', 
+      'Cache-Control': 'no-cache'
     }
   };
 
@@ -29,20 +34,19 @@ export default function handler(req, res) {
     let body = '';
     proxyRes.on('data', (chunk) => { body += chunk; });
     proxyRes.on('end', () => {
-      res.status(proxyRes.statusCode || 200).setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/json');
       
+      // Si sigue dando 403, intentamos devolver el cuerpo para ver si EA manda un mensaje de "Rate Limit"
       if (proxyRes.statusCode === 403) {
-        return res.json({ 
-          error: "EA bloqueó la conexión (403)", 
-          solucion: "Es posible que EA haya cambiado sus reglas de seguridad hoy. Prueba cambiando la plataforma a 'common-gen4' solo para testear." 
-        });
+        try {
+           const errData = JSON.parse(body);
+           return res.status(403).json({ error: "EA 403", detail: errData });
+        } catch(e) {
+           return res.status(403).json({ error: "EA Bloqueo IP de Vercel", bodyPreview: body.substring(0,100) });
+        }
       }
 
-      try {
-        res.send(body);
-      } catch (e) {
-        res.status(502).send({ error: "Error parseando JSON de EA" });
-      }
+      res.status(proxyRes.statusCode || 200).send(body);
     });
   }).on('error', (err) => {
     res.status(500).json({ error: err.message });
