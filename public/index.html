@@ -214,8 +214,10 @@ const PROXY = '/api/ea-proxy';
 // API CALLS via our Vercel proxy
 // ═══════════════════════════════════════════
 async function eaFetch(endpoint, params = {}) {
-  const qs = new URLSearchParams({ endpoint, ...params }).toString();
-  const res = await fetch(`${PROXY}?${qs}`, { signal: AbortSignal.timeout(12000) });
+  // En lugar de pasar el endpoint como variable de query ?endpoint=...
+  // lo enviamos limpio para evitar codificación de caracteres
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${PROXY}?endpoint=${endpoint}&${qs}`);
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
 }
